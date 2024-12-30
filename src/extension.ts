@@ -1,13 +1,15 @@
 import * as vscode from 'vscode';
 import { DocumentType } from './types/documents';
 import { PanelManager } from './ui/panels/PanelManager';
+import { DocumentManager } from './services/DocumentManager';
 
 /**
  * Activates the extension
  */
 export function activate(context: vscode.ExtensionContext) {
-  // Initialize panel manager
+  // Initialize managers
   const panelManager = PanelManager.getInstance();
+  const documentManager = DocumentManager.getInstance(context);
   console.log('Roo-Cline Architect extension is now active');
 
   // Register commands for document creation
@@ -17,15 +19,19 @@ export function activate(context: vscode.ExtensionContext) {
       try {
         const title = await vscode.window.showInputBox({
           prompt: 'Enter document title',
-          placeHolder: 'e.g., Project Inception Document'
+          placeHolder: 'e.g., Project Inception Document',
+          validateInput: (value) => {
+            return value.trim() ? null : 'Title is required';
+          }
         });
 
         if (!title) {
           return;
         }
 
-        // TODO: Implement document creation logic in Sprint 2
-        vscode.window.showInformationMessage(`Creating inception document: ${title}`);
+        const document = await documentManager.createDocument(DocumentType.Inception, title);
+        vscode.window.showInformationMessage(`Created inception document: ${title}`);
+        panelManager.showAllPanels(); // Show the document in the UI
       } catch (error) {
         vscode.window.showErrorMessage(`Error creating document: ${error}`);
       }
@@ -38,15 +44,19 @@ export function activate(context: vscode.ExtensionContext) {
       try {
         const title = await vscode.window.showInputBox({
           prompt: 'Enter document title',
-          placeHolder: 'e.g., Functional Design Specification'
+          placeHolder: 'e.g., Functional Design Specification',
+          validateInput: (value) => {
+            return value.trim() ? null : 'Title is required';
+          }
         });
 
         if (!title) {
           return;
         }
 
-        // TODO: Implement document creation logic in Sprint 2
-        vscode.window.showInformationMessage(`Creating functional document: ${title}`);
+        const document = await documentManager.createDocument(DocumentType.Functional, title);
+        vscode.window.showInformationMessage(`Created functional document: ${title}`);
+        panelManager.showAllPanels(); // Show the document in the UI
       } catch (error) {
         vscode.window.showErrorMessage(`Error creating document: ${error}`);
       }
@@ -59,15 +69,19 @@ export function activate(context: vscode.ExtensionContext) {
       try {
         const title = await vscode.window.showInputBox({
           prompt: 'Enter document title',
-          placeHolder: 'e.g., Technical Design Specification'
+          placeHolder: 'e.g., Technical Design Specification',
+          validateInput: (value) => {
+            return value.trim() ? null : 'Title is required';
+          }
         });
 
         if (!title) {
           return;
         }
 
-        // TODO: Implement document creation logic in Sprint 2
-        vscode.window.showInformationMessage(`Creating technical document: ${title}`);
+        const document = await documentManager.createDocument(DocumentType.Technical, title);
+        vscode.window.showInformationMessage(`Created technical document: ${title}`);
+        panelManager.showAllPanels(); // Show the document in the UI
       } catch (error) {
         vscode.window.showErrorMessage(`Error creating document: ${error}`);
       }

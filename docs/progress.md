@@ -107,8 +107,12 @@ Current Status: Sprint 1 of Epic 1
 - [ ] Testing framework
 
 ### Sprint 2 (Weeks 3-4)
-**Status: Not Started**
-- [ ] Document management foundations
+**Status: In Progress**
+- [x] Document management foundations
+  - [x] Document creation and storage
+  - [x] Document status management
+  - [x] Document type handling
+  - [x] Integration with extension commands
 - [ ] Basic explorer panel
 - [ ] Initial template system
 
