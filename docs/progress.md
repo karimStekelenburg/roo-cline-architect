@@ -15,9 +15,15 @@ Current Status: Sprint 1 of Epic 1
   - [x] Command registration system
 - [x] Extension activation implementation
 - [x] Document type definitions and interfaces
-- [ ] Base UI panel structure
+- [x] Base UI panel structure
+  - [x] Document Explorer panel
+  - [x] Main Editor panel
+  - [x] Preview panel
 - [ ] Initial extension settings
-- [ ] Testing framework setup
+- [x] Testing framework setup
+  - [x] Test runner configuration
+  - [x] Initial test suite setup
+  - [x] PanelManager unit tests
 
 **Current Pull Requests:**
 - PR #1: Initial extension setup and core infrastructure
