@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Review Process - VSCode Extension</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+
+        :root {
+            --bg-primary: #1e1e1e;
+            --bg-secondary: #252526;
+            --bg-tertiary: #2d2d2d;
+            --bg-active: #37373d;
+            --text-primary: #cccccc;
+            --accent-blue: #0e639c;
+            --accent-green: #4ec9b0;
+            --accent-blue-light: #569cd6;
+            --accent-gray: #808080;
+            --accent-yellow: #dcdcaa;
+            --accent-orange: #ce9178;
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            height: 100vh;
+            display: flex;
+            overflow: hidden;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(-20px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        @keyframes highlight {
+            0% { background-color: var(--bg-active); }
+            50% { background-color: rgba(86, 156, 214, 0.2); }
+            100% { background-color: var(--bg-active); }
+        }
+
+        /* Left Sidebar */
+        .activity-bar {
+            width: 50px;
+            height: 100vh;
+            background-color: var(--bg-secondary);
+            border-right: 1px solid var(--bg-primary);
+        }
+
+        /* Explorer Panel */
+        .explorer-panel {
+            width: 300px;
+            height: 100vh;
+            background-color: var(--bg-secondary);
+            border-right: 1px solid var(--bg-primary);
+            display: flex;
+            flex-direction: column;
+            padding: 15px;
+        }
+
+        .panel-title {
+            font-size: 14px;
+            padding: 8px 15px;
+            background-color: var(--bg-tertiary);
+            margin-bottom: 15px;
+            border-radius: 4px;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .status-badge {
+            font-size: 12px;
+            padding: 2px 8px;
+            border-radius: 12px;
+            background-color: var(--accent-blue);
+            color: white;
+        }
+
+        /* Main Editor Area */
+        .main-editor {
+            flex: 1;
+            display: flex;
+            padding: 15px;
+            gap: 15px;
+        }
+
+        .editor-pane, .preview-pane {
+            flex: 1;
+            background-color: var(--bg-tertiary);
+            padding: 20px;
+            border-radius: 6px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Editor Content */
+        .editor-content {
+            margin-top: 20px;
+            font-family: 'Menlo', monospace;
+            font-size: 13px;
+            line-height: 1.5;
+            flex: 1;
+            position: relative;
+        }
+
+        .code-line {
+            padding: 2px 0;
+            display: flex;
+            gap: 12px;
+        }
+
+        .line-number {
+            color: var(--accent-gray);
+            text-align: right;
+            width: 30px;
+            user-select: none;
+        }
+
+        .line-content {
+            flex: 1;
+        }
+
+        .highlighted {
+            background-color: var(--bg-active);
+            animation: highlight 2s infinite;
+        }
+
+        /* Comments Panel */
+        .comments-panel {
+            width: 300px;
+            background-color: var(--bg-tertiary);
+            padding: 20px;
+            border-radius: 6px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .comment {
+            background-color: var(--bg-active);
+            border-radius: 6px;
+            padding: 12px;
+            font-size: 13px;
+        }
+
+        .comment-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .comment-author {
+            font-weight: 500;
+            color: var(--accent-yellow);
+        }
+
+        .comment-type {
+            font-size: 12px;
+            padding: 2px 8px;
+            border-radius: 12px;
+            background-color: var(--accent-blue);
+            color: white;
+        }
+
+        .comment-content {
+            color: var(--text-primary);
+            line-height: 1.4;
+        }
+
+        .comment-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .comment-action {
+            font-size: 12px;
+            color: var(--accent-blue-light);
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+
+        .comment-action:hover {
+            background-color: var(--bg-secondary);
+        }
+
+        /* Review Actions */
+        .review-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid var(--bg-active);
+        }
+
+        .review-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+        }
+
+        .status-icon {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: var(--accent-blue-light);
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary {
+            background-color: var(--accent-blue);
+            color: #ffffff;
+        }
+
+        .btn-primary:hover {
+            background-color: #1177bd;
+        }
+
+        .btn-secondary {
+            background-color: var(--bg-active);
+            color: var(--text-primary);
+        }
+
+        .btn-secondary:hover {
+            background-color: #454545;
+        }
+
+        /* Navigation */
+        .nav-links {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+            background-color: var(--bg-active);
+            padding: 10px;
+            border-radius: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            z-index: 1000;
+        }
+
+        .nav-link {
+            color: var(--text-primary);
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 15px;
+            transition: all 0.2s ease;
+        }
+
+        .nav-link:hover {
+            background-color: var(--accent-blue);
+            color: white;
+        }
+
+        .nav-link.active {
+            background-color: var(--accent-blue);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <!-- Left Sidebar -->
+    <div class="activity-bar"></div>
+
+    <!-- Explorer Panel -->
+    <div class="explorer-panel">
+        <div class="panel-title">
+            TECHNICAL DESIGN
+            <span class="status-badge">Under Review</span>
+        </div>
+    </div>
+
+    <!-- Main Editor Area -->
+    <div class="main-editor">
+        <!-- Editor Pane -->
+        <div class="editor-pane">
+            <div class="panel-title">EDITOR</div>
+            <div class="editor-content">
+                <div class="code-line">
+                    <span class="line-number">1</span>
+                    <span class="line-content"># System Architecture</span>
+                </div>
+                <div class="code-line">
+                    <span class="line-number">2</span>
+                    <span class="line-content"></span>
+                </div>
+                <div class="code-line">
+                    <span class="line-number">3</span>
+                    <span class="line-content">The system implements a microservices architecture</span>
+                </div>
+                <div class="code-line">
+                    <span class="line-number">4</span>
+                    <span class="line-content">with the following components:</span>
+                </div>
+                <div class="code-line highlighted">
+                    <span class="line-number">5</span>
+                    <span class="line-content">- API Gateway for request routing</span>
+                </div>
+                <div class="code-line">
+                    <span class="line-number">6</span>
+                    <span class="line-content">- Authentication Service</span>
+                </div>
+                <div class="code-line">
+                    <span class="line-number">7</span>
+                    <span class="line-content">- User Management Service</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Comments Panel -->
+        <div class="comments-panel">
+            <div class="panel-title">REVIEW COMMENTS</div>
+            
+            <div class="comment">
+                <div class="comment-header">
+                    <span class="comment-author">Technical Lead</span>
+                    <span class="comment-type">Architecture</span>
+                </div>
+                <div class="comment-content">
+                    Consider adding rate limiting to the API Gateway for better resource management.
+                </div>
+                <div class="comment-actions">
+                    <span class="comment-action">Reply</span>
+                    <span class="comment-action">Resolve</span>
+                </div>
+            </div>
+
+            <div class="comment">
+                <div class="comment-header">
+                    <span class="comment-author">Security Engineer</span>
+                    <span class="comment-type">Security</span>
+                </div>
+                <div class="comment-content">
+                    We should specify the authentication mechanism being used.
+                </div>
+                <div class="comment-actions">
+                    <span class="comment-action">Reply</span>
+                    <span class="comment-action">Resolve</span>
+                </div>
+            </div>
+
+            <div class="review-actions">
+                <div class="review-status">
+                    <div class="status-icon"></div>
+                    <span>2 comments pending</span>
+                </div>
+                <div class="action-buttons">
+                    <button class="btn btn-primary">Complete Review</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <div class="nav-links">
+        <a href="index.html" class="nav-link">Main View</a>
+        <a href="usecase1.html" class="nav-link">New Document</a>
+        <a href="usecase2.html" class="nav-link">Context Library</a>
+        <a href="usecase3.html" class="nav-link active">Review Process</a>
+    </div>
+</body>
+</html>

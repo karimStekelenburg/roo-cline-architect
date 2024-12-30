@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Context Library - VSCode Extension</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+
+        :root {
+            --bg-primary: #1e1e1e;
+            --bg-secondary: #252526;
+            --bg-tertiary: #2d2d2d;
+            --bg-active: #37373d;
+            --text-primary: #cccccc;
+            --accent-blue: #0e639c;
+            --accent-green: #4ec9b0;
+            --accent-blue-light: #569cd6;
+            --accent-gray: #808080;
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            height: 100vh;
+            display: flex;
+            overflow: hidden;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(-20px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        @keyframes dragPreview {
+            0% { transform: translate(0, 0); opacity: 0.7; }
+            100% { transform: translate(300px, -100px); opacity: 0.9; }
+        }
+
+        /* Left Sidebar */
+        .activity-bar {
+            width: 50px;
+            height: 100vh;
+            background-color: var(--bg-secondary);
+            border-right: 1px solid var(--bg-primary);
+        }
+
+        /* Explorer Panel */
+        .explorer-panel {
+            width: 300px;
+            height: 100vh;
+            background-color: var(--bg-secondary);
+            border-right: 1px solid var(--bg-primary);
+            display: flex;
+            flex-direction: column;
+            padding: 15px;
+        }
+
+        .panel-title {
+            font-size: 14px;
+            padding: 8px 15px;
+            background-color: var(--bg-tertiary);
+            margin-bottom: 15px;
+            border-radius: 4px;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+        }
+
+        /* Context Library */
+        .context-library {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .search-box {
+            margin: 0 0 15px 0;
+            padding: 8px 12px;
+            background-color: var(--bg-tertiary);
+            border: 1px solid var(--bg-active);
+            border-radius: 4px;
+            color: var(--text-primary);
+            font-size: 13px;
+        }
+
+        .search-box:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+        }
+
+        .context-tree {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .tree-item {
+            padding: 8px 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-radius: 4px;
+            margin: 2px 0;
+            transition: all 0.2s ease;
+        }
+
+        .tree-item:hover {
+            background-color: var(--bg-active);
+        }
+
+        .tree-item.expanded {
+            background-color: var(--bg-active);
+        }
+
+        .tree-item .icon {
+            font-size: 12px;
+            width: 16px;
+            text-align: center;
+        }
+
+        .tree-children {
+            margin-left: 24px;
+        }
+
+        /* Pattern Preview */
+        .pattern-preview {
+            background-color: var(--bg-tertiary);
+            border: 1px solid var(--accent-blue);
+            border-radius: 4px;
+            padding: 12px;
+            margin: 10px 0;
+            position: absolute;
+            width: 250px;
+            left: 50px;
+            top: 200px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            animation: dragPreview 2s ease-in-out infinite;
+            cursor: move;
+        }
+
+        .pattern-preview h3 {
+            color: var(--accent-blue-light);
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+
+        .pattern-preview p {
+            font-size: 12px;
+            line-height: 1.4;
+            margin-bottom: 8px;
+        }
+
+        /* Main Editor Area */
+        .main-editor {
+            flex: 1;
+            display: flex;
+            padding: 15px;
+            gap: 15px;
+        }
+
+        .editor-pane, .preview-pane {
+            flex: 1;
+            background-color: var(--bg-tertiary);
+            padding: 20px;
+            border-radius: 6px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .drop-indicator {
+            border: 2px dashed var(--accent-blue);
+            border-radius: 6px;
+            height: 100px;
+            margin: 20px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-blue-light);
+            font-size: 14px;
+            background-color: rgba(14, 99, 156, 0.1);
+        }
+
+        /* Navigation */
+        .nav-links {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+            background-color: var(--bg-active);
+            padding: 10px;
+            border-radius: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            z-index: 1000;
+        }
+
+        .nav-link {
+            color: var(--text-primary);
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 15px;
+            transition: all 0.2s ease;
+        }
+
+        .nav-link:hover {
+            background-color: var(--accent-blue);
+            color: white;
+        }
+
+        .nav-link.active {
+            background-color: var(--accent-blue);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <!-- Left Sidebar -->
+    <div class="activity-bar"></div>
+
+    <!-- Explorer Panel -->
+    <div class="explorer-panel">
+        <div class="context-library">
+            <div class="panel-title">CONTEXT LIBRARY</div>
+            <input type="text" class="search-box" placeholder="Search patterns..." value="Microservices">
+            
+            <div class="context-tree">
+                <div class="tree-item expanded">
+                    <span class="icon">▼</span>
+                    <span>Architecture Patterns</span>
+                </div>
+                <div class="tree-children">
+                    <div class="tree-item expanded">
+                        <span class="icon">▼</span>
+                        <span>Microservices</span>
+                    </div>
+                    <div class="tree-children">
+                        <div class="tree-item" style="background-color: var(--accent-blue);">
+                            <span class="icon">⚡</span>
+                            <span>API Gateway</span>
+                        </div>
+                        <div class="tree-item">
+                            <span class="icon">⚡</span>
+                            <span>Service Discovery</span>
+                        </div>
+                    </div>
+                    <div class="tree-item">
+                        <span class="icon">▶</span>
+                        <span>Event-Driven</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pattern being dragged -->
+    <div class="pattern-preview">
+        <h3>API Gateway Pattern</h3>
+        <p>A server that acts as an API front-end, receiving API requests and routing them to the appropriate backend service.</p>
+        <small style="color: var(--accent-blue-light);">Drag to editor to insert</small>
+    </div>
+
+    <!-- Main Editor Area -->
+    <div class="main-editor">
+        <!-- Editor Pane -->
+        <div class="editor-pane">
+            <div class="panel-title">EDITOR</div>
+            <div class="drop-indicator">
+                Drop pattern here to insert template
+            </div>
+        </div>
+
+        <!-- Preview Pane -->
+        <div class="preview-pane">
+            <div class="panel-title">PREVIEW</div>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <div class="nav-links">
+        <a href="index.html" class="nav-link">Main View</a>
+        <a href="usecase1.html" class="nav-link">New Document</a>
+        <a href="usecase2.html" class="nav-link active">Context Library</a>
+        <a href="usecase3.html" class="nav-link">Review Process</a>
+    </div>
+</body>
+</html>
