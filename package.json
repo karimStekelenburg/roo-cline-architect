@@ -1,0 +1,60 @@
+{
+  "name": "roo-cline-architect",
+  "displayName": "Roo-Cline Architect",
+  "description": "VSCode extension that enhances Roo-Cline's capabilities by formalizing and streamlining architectural design workflows",
+  "version": "0.1.0",
+  "publisher": "rooveterinaryinc",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "roo-cline-architect.createInceptionDocument",
+        "title": "Roo-Cline Architect: Create Inception Document"
+      },
+      {
+        "command": "roo-cline-architect.createFunctionalDocument",
+        "title": "Roo-Cline Architect: Create Functional Document"
+      },
+      {
+        "command": "roo-cline-architect.createTechnicalDocument",
+        "title": "Roo-Cline Architect: Create Technical Document"
+      },
+      {
+        "command": "roo-cline-architect.openDocumentExplorer",
+        "title": "Roo-Cline Architect: Open Document Explorer"
+      },
+      {
+        "command": "roo-cline-architect.openContextLibrary",
+        "title": "Roo-Cline Architect: Open Context Library"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "bun run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "bun run compile && bun run lint",
+    "lint": "eslint src --ext ts",
+    "test": "node ./dist/test/runTest.js"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/vscode": "^1.85.0",
+    "@types/node": "18.x",
+    "@typescript-eslint/eslint-plugin": "^6.15.0",
+    "@typescript-eslint/parser": "^6.15.0",
+    "eslint": "^8.56.0",
+    "typescript": "^5.3.3"
+  },
+  "dependencies": {
+    "vscode-languageclient": "^9.0.1"
+  },
+  "type": "module"
+}
