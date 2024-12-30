@@ -1,14 +1,34 @@
 import * as assert from 'assert';
 import * as vscode from 'vscode';
 import { DocumentManager } from '../../services/DocumentManager';
+import { TemplateManager } from '../../services/TemplateManager';
 import { DocumentType, DocumentStatus, BaseDocument } from '../../types/documents';
 
 suite('DocumentManager Test Suite', () => {
   let documentManager: DocumentManager;
   let mockContext: vscode.ExtensionContext;
+  let mockTemplateManager: any;
   let storedDocs: Record<string, BaseDocument> = {};
 
   setup(() => {
+    // Mock template content
+    const defaultTemplate = {
+      type: DocumentType.Inception,
+      name: 'Default Inception Template',
+      content: '# Default Template Content'
+    };
+
+    // Mock template manager
+    mockTemplateManager = {
+      getTemplate: (name: string) => name === 'test-template' ? {
+        type: DocumentType.Inception,
+        name: 'test-template',
+        content: '# Test Template Content'
+      } : undefined,
+      getTemplatesByType: (type: DocumentType) => [defaultTemplate],
+      getInstance: () => mockTemplateManager
+    };
+
     // Mock VSCode extension context
     mockContext = {
       globalState: {
@@ -20,7 +40,14 @@ suite('DocumentManager Test Suite', () => {
       }
     } as any;
 
+    // Mock TemplateManager.getInstance
+    const originalGetInstance = TemplateManager.getInstance;
+    TemplateManager.getInstance = (context: vscode.ExtensionContext) => mockTemplateManager;
+
     documentManager = DocumentManager.getInstance(mockContext);
+
+    // Restore original getInstance
+    TemplateManager.getInstance = originalGetInstance;
   });
 
   teardown(() => {
@@ -44,6 +71,20 @@ suite('DocumentManager Test Suite', () => {
     assert.ok(doc.id);
     assert.ok(doc.createdAt);
     assert.ok(doc.updatedAt);
+  });
+
+  test('createDocument uses default template when no template specified', async () => {
+    const doc = await documentManager.createDocument(DocumentType.Inception, 'Test');
+    assert.strictEqual(doc.content, '# Default Template Content');
+  });
+
+  test('createDocument uses specified template when provided', async () => {
+    const doc = await documentManager.createDocument(
+      DocumentType.Inception,
+      'Test',
+      'test-template'
+    );
+    assert.strictEqual(doc.content, '# Test Template Content');
   });
 
   test('updateDocument updates document properties', async () => {

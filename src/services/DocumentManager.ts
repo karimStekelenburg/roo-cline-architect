@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { BaseDocument, DocumentStatus, DocumentType, InceptionDocument, FunctionalDocument, TechnicalDocument } from '../types/documents';
 import { v4 as uuidv4 } from 'uuid';
+import { TemplateManager } from './TemplateManager';
 
 /**
  * Service for managing architectural documents
@@ -10,30 +11,57 @@ export class DocumentManager {
   private documents: Map<string, BaseDocument>;
   private readonly storageKey = 'roo-cline-architect.documents';
 
-  private constructor(private context: vscode.ExtensionContext) {
+  private constructor(
+    private context: vscode.ExtensionContext,
+    private templateManager: TemplateManager
+  ) {
     this.documents = new Map();
     this.loadDocuments();
   }
 
   public static getInstance(context: vscode.ExtensionContext): DocumentManager {
     if (!DocumentManager.instance) {
-      DocumentManager.instance = new DocumentManager(context);
+      const templateManager = TemplateManager.getInstance(context);
+      DocumentManager.instance = new DocumentManager(context, templateManager);
     }
     return DocumentManager.instance;
   }
 
   /**
    * Creates a new document of the specified type
+   * @param type The type of document to create
+   * @param title The title of the document
+   * @param templateName Optional name of template to use
    */
-  public async createDocument(type: DocumentType, title: string): Promise<BaseDocument> {
+  public async createDocument(
+    type: DocumentType,
+    title: string,
+    templateName?: string
+  ): Promise<BaseDocument> {
     const id = uuidv4();
     const now = new Date();
     
+    let content = '';
+    if (templateName) {
+      const template = this.templateManager.getTemplate(templateName);
+      if (template) {
+        content = template.content;
+      }
+    } else {
+      // Use default template if no specific template is provided
+      const defaultTemplate = this.templateManager
+        .getTemplatesByType(type)
+        .find(t => t.name.startsWith('Default'));
+      if (defaultTemplate) {
+        content = defaultTemplate.content;
+      }
+    }
+
     const baseDoc: BaseDocument = {
       id,
       type,
       title,
-      content: '',
+      content,
       status: DocumentStatus.Draft,
       createdAt: now,
       updatedAt: now,
