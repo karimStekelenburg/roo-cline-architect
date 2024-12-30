@@ -11,19 +11,32 @@ interface DocumentTemplate {
  * Manages document templates
  */
 export class TemplateManager {
-  private static instance: TemplateManager;
+  private static instance: TemplateManager | undefined;
   private templates: Map<string, DocumentTemplate>;
   private readonly storageKey = 'roo-cline-architect.templates';
 
-  private constructor(private context: vscode.ExtensionContext) {
+  private constructor(
+    private context: vscode.ExtensionContext,
+    private skipDefaults: boolean = false
+  ) {
     this.templates = new Map();
-    this.loadTemplates();
-    this.initializeDefaultTemplates();
   }
 
-  public static getInstance(context: vscode.ExtensionContext): TemplateManager {
+  // For testing purposes
+  public static resetInstance(): void {
+    TemplateManager.instance = undefined;
+  }
+
+  public static async getInstance(
+    context: vscode.ExtensionContext,
+    skipDefaults: boolean = false
+  ): Promise<TemplateManager> {
     if (!TemplateManager.instance) {
-      TemplateManager.instance = new TemplateManager(context);
+      TemplateManager.instance = new TemplateManager(context, skipDefaults);
+      await TemplateManager.instance.loadTemplates();
+      if (!skipDefaults) {
+        await TemplateManager.instance.initializeDefaultTemplates();
+      }
     }
     return TemplateManager.instance;
   }

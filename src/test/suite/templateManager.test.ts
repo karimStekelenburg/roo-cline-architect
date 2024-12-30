@@ -8,7 +8,11 @@ suite('TemplateManager Test Suite', () => {
   let mockContext: vscode.ExtensionContext;
   let storedTemplates: Record<string, any> = {};
 
-  setup(() => {
+  setup(async () => {
+    // Reset singleton instance and storage before each test
+    TemplateManager.resetInstance();
+    storedTemplates = {};
+    
     // Mock VSCode extension context
     mockContext = {
       globalState: {
@@ -20,16 +24,17 @@ suite('TemplateManager Test Suite', () => {
       }
     } as any;
 
-    templateManager = TemplateManager.getInstance(mockContext);
+    // Create new instance without default templates for most tests
+    templateManager = await TemplateManager.getInstance(mockContext, true);
   });
 
-  teardown(() => {
+  test('getInstance returns singleton instance', async () => {
+    // Reset instance to ensure clean state
+    TemplateManager.resetInstance();
     storedTemplates = {};
-  });
-
-  test('getInstance returns singleton instance', () => {
-    const instance1 = TemplateManager.getInstance(mockContext);
-    const instance2 = TemplateManager.getInstance(mockContext);
+    
+    const instance1 = await TemplateManager.getInstance(mockContext, true);
+    const instance2 = await TemplateManager.getInstance(mockContext, true);
     assert.strictEqual(instance1, instance2);
   });
 
@@ -124,9 +129,19 @@ suite('TemplateManager Test Suite', () => {
     );
   });
 
-  test('default templates are created when no templates exist', () => {
-    const templates = templateManager.getAllTemplates();
-    assert.ok(templates.length >= 3); // At least one default template per document type
+  test('default templates are created when no templates exist', async () => {
+    // Reset templates and create new instance with defaults enabled
+    TemplateManager.resetInstance();
+    storedTemplates = {};
+    
+    // Create new instance with defaults enabled (skipDefaults = false)
+    const managerWithDefaults = await TemplateManager.getInstance(mockContext, false);
+    
+    // Wait for async initialization
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    const templates = managerWithDefaults.getAllTemplates();
+    assert.strictEqual(templates.length, 3);
     assert.ok(templates.some(t => t.type === DocumentType.Inception));
     assert.ok(templates.some(t => t.type === DocumentType.Functional));
     assert.ok(templates.some(t => t.type === DocumentType.Technical));

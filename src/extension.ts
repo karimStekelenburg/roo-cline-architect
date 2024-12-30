@@ -3,13 +3,16 @@ import { DocumentType } from './types/documents';
 import { PanelManager } from './ui/panels/PanelManager';
 import { DocumentManager } from './services/DocumentManager';
 
+// Store panel manager instance for cleanup
+let panelManagerInstance: PanelManager | undefined;
+
 /**
  * Activates the extension
  */
-export function activate(context: vscode.ExtensionContext) {
+export async function activate(context: vscode.ExtensionContext) {
   // Initialize managers
-  const panelManager = PanelManager.getInstance();
-  const documentManager = DocumentManager.getInstance(context);
+  const documentManager = await DocumentManager.getInstance(context);
+  panelManagerInstance = await PanelManager.getInstance(context);
   console.log('Roo-Cline Architect extension is now active');
 
   // Register commands for document creation
@@ -29,9 +32,9 @@ export function activate(context: vscode.ExtensionContext) {
           return;
         }
 
-        const document = await documentManager.createDocument(DocumentType.Inception, title);
+        await documentManager.createDocument(DocumentType.Inception, title);
         vscode.window.showInformationMessage(`Created inception document: ${title}`);
-        panelManager.showEditorPanels(); // Show the document in the editor
+        panelManagerInstance?.showEditorPanels(); // Show the document in the editor
       } catch (error) {
         vscode.window.showErrorMessage(`Error creating document: ${error}`);
       }
@@ -54,9 +57,9 @@ export function activate(context: vscode.ExtensionContext) {
           return;
         }
 
-        const document = await documentManager.createDocument(DocumentType.Functional, title);
+        await documentManager.createDocument(DocumentType.Functional, title);
         vscode.window.showInformationMessage(`Created functional document: ${title}`);
-        panelManager.showEditorPanels(); // Show the document in the editor
+        panelManagerInstance?.showEditorPanels(); // Show the document in the editor
       } catch (error) {
         vscode.window.showErrorMessage(`Error creating document: ${error}`);
       }
@@ -79,9 +82,9 @@ export function activate(context: vscode.ExtensionContext) {
           return;
         }
 
-        const document = await documentManager.createDocument(DocumentType.Technical, title);
+        await documentManager.createDocument(DocumentType.Technical, title);
         vscode.window.showInformationMessage(`Created technical document: ${title}`);
-        panelManager.showEditorPanels(); // Show the document in the editor
+        panelManagerInstance?.showEditorPanels(); // Show the document in the editor
       } catch (error) {
         vscode.window.showErrorMessage(`Error creating document: ${error}`);
       }
@@ -93,7 +96,7 @@ export function activate(context: vscode.ExtensionContext) {
     'roo-cline-architect.openDocumentExplorer',
     () => {
       try {
-        panelManager.showEditorPanels();
+        panelManagerInstance?.showEditorPanels();
       } catch (error) {
         vscode.window.showErrorMessage(`Error opening document explorer: ${error}`);
       }
@@ -120,7 +123,7 @@ export function activate(context: vscode.ExtensionContext) {
   // Add panel cleanup to subscriptions
   context.subscriptions.push({
     dispose: () => {
-      panelManager.disposeAllPanels();
+      panelManagerInstance?.disposeAllPanels();
     }
   });
 }
@@ -130,6 +133,6 @@ export function activate(context: vscode.ExtensionContext) {
  */
 export function deactivate() {
   // Clean up panels
-  PanelManager.getInstance().disposeAllPanels();
+  panelManagerInstance?.disposeAllPanels();
   console.log('Roo-Cline Architect extension is now deactivated');
 }

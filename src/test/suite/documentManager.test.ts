@@ -10,24 +10,66 @@ suite('DocumentManager Test Suite', () => {
   let mockTemplateManager: any;
   let storedDocs: Record<string, BaseDocument> = {};
 
-  setup(() => {
-    // Mock template content
+  setup(async () => {
+    // Reset singleton instances and storage
+    DocumentManager.resetInstance();
+    TemplateManager.resetInstance();
+    storedDocs = {};
+    
+    // Mock template content matching actual default template
     const defaultTemplate = {
       type: DocumentType.Inception,
       name: 'Default Inception Template',
-      content: '# Default Template Content'
+      content: `# Project Inception Document
+
+## Project Overview
+[Brief description of the project]
+
+## Business Case
+[Justification for the project]
+
+## Project Scope
+[Define what is in and out of scope]
+
+## Initial Risks
+- [Risk 1]
+- [Risk 2]
+
+## Resource Needs
+- [Resource 1]
+- [Resource 2]
+
+## Project Timeline
+[High-level timeline and milestones]`
     };
 
-    // Mock template manager
+    // Mock template manager with proper template handling
     mockTemplateManager = {
-      getTemplate: (name: string) => name === 'test-template' ? {
-        type: DocumentType.Inception,
-        name: 'test-template',
-        content: '# Test Template Content'
-      } : undefined,
-      getTemplatesByType: (type: DocumentType) => [defaultTemplate],
+      getTemplate: (name: string) => {
+        if (name === 'test-template') {
+          return {
+            type: DocumentType.Inception,
+            name: 'test-template',
+            content: '# Test Template Content'
+          };
+        }
+        return undefined;
+      },
+      getTemplatesByType: (type: DocumentType) => {
+        if (type === DocumentType.Inception) {
+          return [{
+            type: DocumentType.Inception,
+            name: 'Default Inception Template',
+            content: defaultTemplate.content
+          }];
+        }
+        return [];
+      },
       getInstance: () => mockTemplateManager
     };
+
+    // Reset all stored data
+    storedDocs = {};
 
     // Mock VSCode extension context
     mockContext = {
@@ -42,9 +84,9 @@ suite('DocumentManager Test Suite', () => {
 
     // Mock TemplateManager.getInstance
     const originalGetInstance = TemplateManager.getInstance;
-    TemplateManager.getInstance = (context: vscode.ExtensionContext) => mockTemplateManager;
+    TemplateManager.getInstance = async (context: vscode.ExtensionContext, skipDefaults?: boolean) => mockTemplateManager;
 
-    documentManager = DocumentManager.getInstance(mockContext);
+    documentManager = await DocumentManager.getInstance(mockContext);
 
     // Restore original getInstance
     TemplateManager.getInstance = originalGetInstance;
@@ -54,9 +96,9 @@ suite('DocumentManager Test Suite', () => {
     storedDocs = {};
   });
 
-  test('getInstance returns singleton instance', () => {
-    const instance1 = DocumentManager.getInstance(mockContext);
-    const instance2 = DocumentManager.getInstance(mockContext);
+  test('getInstance returns singleton instance', async () => {
+    const instance1 = await DocumentManager.getInstance(mockContext);
+    const instance2 = await DocumentManager.getInstance(mockContext);
     assert.strictEqual(instance1, instance2);
   });
 
@@ -75,7 +117,7 @@ suite('DocumentManager Test Suite', () => {
 
   test('createDocument uses default template when no template specified', async () => {
     const doc = await documentManager.createDocument(DocumentType.Inception, 'Test');
-    assert.strictEqual(doc.content, '# Default Template Content');
+    assert.strictEqual(doc.content, mockTemplateManager.getTemplatesByType(DocumentType.Inception)[0].content);
   });
 
   test('createDocument uses specified template when provided', async () => {

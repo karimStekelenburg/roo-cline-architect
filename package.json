@@ -40,14 +40,15 @@
     "vscode:prepublish": "bun run compile",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
-    "pretest": "bun run compile && bun run lint",
+    "pretest": "bun run compile",
     "lint": "eslint src --ext ts",
-    "test": "bun ./dist/test/runTest.js"
+    "test": "node ./dist/test/runTest.js"
   },
   "devDependencies": {
     "@types/bun": "latest",
     "@types/mocha": "^10.0.10",
     "@types/node": "18.x",
+    "@types/uuid": "^10.0.0",
     "@types/vscode": "^1.85.0",
     "@typescript-eslint/eslint-plugin": "^6.15.0",
     "@typescript-eslint/parser": "^6.15.0",
@@ -57,7 +58,7 @@
     "typescript": "^5.3.3"
   },
   "dependencies": {
+    "uuid": "^11.0.3",
     "vscode-languageclient": "^9.0.1"
-  },
-  "type": "module"
+  }
 }

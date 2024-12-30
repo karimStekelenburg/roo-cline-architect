@@ -6,7 +6,12 @@ import { DocumentExplorerProvider } from '../providers/DocumentExplorerProvider'
  * Manages the creation and lifecycle of extension panels
  */
 export class PanelManager {
-  private static instance: PanelManager;
+  private static instance: PanelManager | undefined;
+
+  // For testing purposes
+  public static resetInstance(): void {
+    PanelManager.instance = undefined;
+  }
   private documentExplorerProvider: DocumentExplorerProvider;
   private mainEditorPanel: vscode.WebviewPanel | undefined;
   private previewPanel: vscode.WebviewPanel | undefined;
@@ -29,9 +34,9 @@ export class PanelManager {
     );
   }
 
-  public static getInstance(context: vscode.ExtensionContext): PanelManager {
+  public static async getInstance(context: vscode.ExtensionContext): Promise<PanelManager> {
     if (!PanelManager.instance) {
-      const documentManager = DocumentManager.getInstance(context);
+      const documentManager = await DocumentManager.getInstance(context);
       PanelManager.instance = new PanelManager(context, documentManager);
     }
     return PanelManager.instance;

@@ -1,0 +1,28 @@
+
+
+1. Always use TypeScript
+2. Always use the bun package manager
+3. Always start by reading all files in the /docs directory
+4. When working on an epic, sprint, or user story, adhere to the following instructions meticulously
+   1. **Branch Creation:**
+      - Before commencing work on epics or sprints, create a new branch.
+      - For an epic, branch from the main.
+      - For a sprint, branch from the corresponding epic branch.
+
+   2. **Pull Requests:**
+      - Upon completing an epic or sprint, create a pull request using the GitHub CLI (gh).
+      - Continue working by branching off the branch with an open pull request. This allows ongoing work while awaiting approval or merging of the pull requests.
+
+   3. **User Stories:**
+      - Create a new branch for each user story.
+      - Merge these branches into their corresponding sprint branches when the work is complete.
+
+   4. **Commit Practices:**
+      - Always rebase; do not create merge commits.
+      - Use conventional commits for commit messages.
+      - Include references to identifiers for the sprint, epic, or user story in commit messages.
+
+    Essentially a git-flow workflow.
+5. When finishing an epic or sprint, always update docs/progress.md
+6. 
+7. DO NOT FORGET TO CREATE THE PULL REQUESTS!!!!

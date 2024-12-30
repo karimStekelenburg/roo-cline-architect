@@ -1,14 +1,15 @@
 import * as assert from 'assert';
 import * as vscode from 'vscode';
 import { PanelManager } from '../../ui/panels/PanelManager';
-import { DocumentManager } from '../../services/DocumentManager';
 
 suite('PanelManager Test Suite', () => {
   let mockContext: vscode.ExtensionContext;
   let mockSubscriptions: { dispose: () => void }[];
-  let mockWebviewViewProvider: any;
 
-  setup(() => {
+  setup(async () => {
+    // Reset singleton instance
+    PanelManager.resetInstance();
+
     mockSubscriptions = [];
     mockContext = {
       subscriptions: mockSubscriptions,
@@ -20,27 +21,31 @@ suite('PanelManager Test Suite', () => {
     } as any;
 
     // Mock registerWebviewViewProvider
-    mockWebviewViewProvider = undefined;
     const originalRegisterWebviewViewProvider = vscode.window.registerWebviewViewProvider;
     vscode.window.registerWebviewViewProvider = (viewType: string, provider: vscode.WebviewViewProvider) => {
-      mockWebviewViewProvider = provider;
       return { dispose: () => {} };
     };
+
+    // Restore original after test
+    teardown(() => {
+      vscode.window.registerWebviewViewProvider = originalRegisterWebviewViewProvider;
+    });
   });
 
-  teardown(() => {
+  teardown(async () => {
     // Clean up any panels that were created
-    PanelManager.getInstance(mockContext).disposeAllPanels();
+    const panelManager = await PanelManager.getInstance(mockContext);
+    panelManager.disposeAllPanels();
   });
 
-  test('getInstance returns singleton instance', () => {
-    const instance1 = PanelManager.getInstance(mockContext);
-    const instance2 = PanelManager.getInstance(mockContext);
+  test('getInstance returns singleton instance', async () => {
+    const instance1 = await PanelManager.getInstance(mockContext);
+    const instance2 = await PanelManager.getInstance(mockContext);
     assert.strictEqual(instance1, instance2);
   });
 
-  test('showEditorPanels creates editor and preview panels', () => {
-    const panelManager = PanelManager.getInstance(mockContext);
+  test('showEditorPanels creates editor and preview panels', async () => {
+    const panelManager = await PanelManager.getInstance(mockContext);
     
     // Mock WebviewPanel creation
     let panelsCreated = 0;
@@ -78,13 +83,15 @@ suite('PanelManager Test Suite', () => {
     }
   });
 
-  test('disposeAllPanels disposes all panels', () => {
-    const panelManager = PanelManager.getInstance(mockContext);
+  test('disposeAllPanels disposes all panels', async () => {
+    const panelManager = await PanelManager.getInstance(mockContext);
     let disposeCalled = 0;
     
     const originalCreateWebviewPanel = vscode.window.createWebviewPanel;
     vscode.window.createWebviewPanel = (): vscode.WebviewPanel => {
-      return {
+      let disposeCallback: (() => void) | undefined;
+      
+      const panel = {
         viewType: 'test',
         webview: {
           html: '',
@@ -94,22 +101,41 @@ suite('PanelManager Test Suite', () => {
           cspSource: '',
           options: {}
         },
-        onDidDispose: () => ({ dispose: () => {} }),
+        onDidDispose: (callback: () => void) => {
+          disposeCallback = callback;
+          return { dispose: () => {} };
+        },
         onDidChangeViewState: () => ({ dispose: () => {} }),
         reveal: () => {},
-        dispose: () => { disposeCalled++; },
+        dispose: () => {
+          disposeCalled++;
+          if (disposeCallback) {
+            disposeCallback();
+          }
+        },
         visible: true,
         active: true,
         viewColumn: vscode.ViewColumn.One,
         options: {},
         title: 'Test Panel'
       };
+
+      // Immediately register the dispose callback
+      if (panel.onDidDispose && typeof panel.onDidDispose === 'function') {
+        panel.onDidDispose(() => {
+          if (disposeCallback) {
+            disposeCallback();
+          }
+        });
+      }
+
+      return panel;
     };
 
     try {
-      panelManager.showEditorPanels();
+      panelManager.showEditorPanels(); // Creates 2 panels
       panelManager.disposeAllPanels();
-      assert.strictEqual(disposeCalled, 2); // Should dispose editor and preview panels
+      assert.strictEqual(disposeCalled, 2); // Both panels should be disposed
     } finally {
       vscode.window.createWebviewPanel = originalCreateWebviewPanel;
     }

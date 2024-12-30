@@ -7,7 +7,12 @@ import { TemplateManager } from './TemplateManager';
  * Service for managing architectural documents
  */
 export class DocumentManager {
-  private static instance: DocumentManager;
+  private static instance: DocumentManager | undefined;
+
+  // For testing purposes
+  public static resetInstance(): void {
+    DocumentManager.instance = undefined;
+  }
   private documents: Map<string, BaseDocument>;
   private readonly storageKey = 'roo-cline-architect.documents';
 
@@ -19,10 +24,11 @@ export class DocumentManager {
     this.loadDocuments();
   }
 
-  public static getInstance(context: vscode.ExtensionContext): DocumentManager {
+  public static async getInstance(context: vscode.ExtensionContext): Promise<DocumentManager> {
     if (!DocumentManager.instance) {
-      const templateManager = TemplateManager.getInstance(context);
+      const templateManager = await TemplateManager.getInstance(context);
       DocumentManager.instance = new DocumentManager(context, templateManager);
+      await DocumentManager.instance.loadDocuments();
     }
     return DocumentManager.instance;
   }
