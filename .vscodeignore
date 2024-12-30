@@ -1,0 +1,14 @@
+.git/**
+.gitignore
+.github/**
+.vscode/**
+.vscode-test/**
+docs/**
+src/**
+**/tsconfig.json
+**/.eslintrc.json
+**/*.map
+**/*.ts
+node_modules/**
+bun.lockb
+.clinerules
