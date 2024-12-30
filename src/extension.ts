@@ -1,10 +1,13 @@
 import * as vscode from 'vscode';
 import { DocumentType } from './types/documents';
+import { PanelManager } from './ui/panels/PanelManager';
 
 /**
  * Activates the extension
  */
 export function activate(context: vscode.ExtensionContext) {
+  // Initialize panel manager
+  const panelManager = PanelManager.getInstance();
   console.log('Roo-Cline Architect extension is now active');
 
   // Register commands for document creation
@@ -75,8 +78,11 @@ export function activate(context: vscode.ExtensionContext) {
   const openDocumentExplorer = vscode.commands.registerCommand(
     'roo-cline-architect.openDocumentExplorer',
     () => {
-      // TODO: Implement document explorer in Sprint 2
-      vscode.window.showInformationMessage('Opening document explorer');
+      try {
+        panelManager.showAllPanels();
+      } catch (error) {
+        vscode.window.showErrorMessage(`Error opening document explorer: ${error}`);
+      }
     }
   );
 
@@ -96,11 +102,20 @@ export function activate(context: vscode.ExtensionContext) {
     openDocumentExplorer,
     openContextLibrary
   );
+
+  // Add panel cleanup to subscriptions
+  context.subscriptions.push({
+    dispose: () => {
+      panelManager.disposeAllPanels();
+    }
+  });
 }
 
 /**
  * Deactivates the extension
  */
 export function deactivate() {
+  // Clean up panels
+  PanelManager.getInstance().disposeAllPanels();
   console.log('Roo-Cline Architect extension is now deactivated');
 }
