@@ -1,50 +1,40 @@
 import * as vscode from 'vscode';
+import { DocumentManager } from '../../services/DocumentManager';
+import { DocumentExplorerProvider } from '../providers/DocumentExplorerProvider';
 
 /**
  * Manages the creation and lifecycle of extension panels
  */
 export class PanelManager {
   private static instance: PanelManager;
-  private documentExplorerPanel: vscode.WebviewPanel | undefined;
+  private documentExplorerProvider: DocumentExplorerProvider;
   private mainEditorPanel: vscode.WebviewPanel | undefined;
   private previewPanel: vscode.WebviewPanel | undefined;
 
-  private constructor() {}
+  private constructor(
+    private readonly context: vscode.ExtensionContext,
+    private readonly documentManager: DocumentManager
+  ) {
+    this.documentExplorerProvider = new DocumentExplorerProvider(
+      context.extensionUri,
+      documentManager
+    );
 
-  public static getInstance(): PanelManager {
-    if (!PanelManager.instance) {
-      PanelManager.instance = new PanelManager();
-    }
-    return PanelManager.instance;
+    // Register the DocumentExplorerProvider
+    context.subscriptions.push(
+      vscode.window.registerWebviewViewProvider(
+        DocumentExplorerProvider.viewType,
+        this.documentExplorerProvider
+      )
+    );
   }
 
-  /**
-   * Creates and shows the document explorer panel
-   */
-  public showDocumentExplorer() {
-    if (this.documentExplorerPanel) {
-      this.documentExplorerPanel.reveal();
-      return;
+  public static getInstance(context: vscode.ExtensionContext): PanelManager {
+    if (!PanelManager.instance) {
+      const documentManager = DocumentManager.getInstance(context);
+      PanelManager.instance = new PanelManager(context, documentManager);
     }
-
-    this.documentExplorerPanel = vscode.window.createWebviewPanel(
-      'rooClieneArchitect.documentExplorer',
-      'Document Explorer',
-      vscode.ViewColumn.One,
-      {
-        enableScripts: true,
-        retainContextWhenHidden: true
-      }
-    );
-
-    this.documentExplorerPanel.webview.html = this.getDocumentExplorerHtml();
-
-    this.documentExplorerPanel.onDidDispose(
-      () => {
-        this.documentExplorerPanel = undefined;
-      },
-      null
-    );
+    return PanelManager.instance;
   }
 
   /**
@@ -106,10 +96,9 @@ export class PanelManager {
   }
 
   /**
-   * Shows all panels in their respective columns
+   * Shows the editor and preview panels
    */
-  public showAllPanels() {
-    this.showDocumentExplorer();
+  public showEditorPanels() {
     this.showMainEditor();
     this.showPreview();
   }
@@ -118,88 +107,12 @@ export class PanelManager {
    * Disposes all panels
    */
   public disposeAllPanels() {
-    if (this.documentExplorerPanel) {
-      this.documentExplorerPanel.dispose();
-    }
     if (this.mainEditorPanel) {
       this.mainEditorPanel.dispose();
     }
     if (this.previewPanel) {
       this.previewPanel.dispose();
     }
-  }
-
-  private getDocumentExplorerHtml() {
-    return `
-      <!DOCTYPE html>
-      <html lang="en">
-      <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Document Explorer</title>
-        <style>
-          body {
-            padding: 0;
-            margin: 0;
-            background-color: var(--vscode-editor-background);
-            color: var(--vscode-editor-foreground);
-            font-family: var(--vscode-font-family);
-          }
-          .container {
-            padding: 15px;
-          }
-          .document-list {
-            list-style: none;
-            padding: 0;
-          }
-          .document-item {
-            display: flex;
-            align-items: center;
-            padding: 8px;
-            cursor: pointer;
-            border-radius: 4px;
-          }
-          .document-item:hover {
-            background-color: var(--vscode-list-hoverBackground);
-          }
-          .status-indicator {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            margin-right: 8px;
-          }
-          .status-approved {
-            background-color: var(--vscode-testing-iconPassed);
-          }
-          .status-in-progress {
-            background-color: var(--vscode-notificationsInfoIcon-foreground);
-          }
-          .status-pending {
-            background-color: var(--vscode-disabledForeground);
-          }
-        </style>
-      </head>
-      <body>
-        <div class="container">
-          <h2>Documents</h2>
-          <ul class="document-list">
-            <li class="document-item">
-              <span class="status-indicator status-approved"></span>
-              Project Overview
-            </li>
-            <li class="document-item">
-              <span class="status-indicator status-in-progress"></span>
-              Technical Design
-            </li>
-            <li class="document-item">
-              <span class="status-indicator status-pending"></span>
-              Implementation Plan
-            </li>
-          </ul>
-        </div>
-      </body>
-      </html>
-    `;
   }
 
   private getMainEditorHtml() {

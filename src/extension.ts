@@ -31,7 +31,7 @@ export function activate(context: vscode.ExtensionContext) {
 
         const document = await documentManager.createDocument(DocumentType.Inception, title);
         vscode.window.showInformationMessage(`Created inception document: ${title}`);
-        panelManager.showAllPanels(); // Show the document in the UI
+        panelManager.showEditorPanels(); // Show the document in the editor
       } catch (error) {
         vscode.window.showErrorMessage(`Error creating document: ${error}`);
       }
@@ -56,7 +56,7 @@ export function activate(context: vscode.ExtensionContext) {
 
         const document = await documentManager.createDocument(DocumentType.Functional, title);
         vscode.window.showInformationMessage(`Created functional document: ${title}`);
-        panelManager.showAllPanels(); // Show the document in the UI
+        panelManager.showEditorPanels(); // Show the document in the editor
       } catch (error) {
         vscode.window.showErrorMessage(`Error creating document: ${error}`);
       }
@@ -81,7 +81,7 @@ export function activate(context: vscode.ExtensionContext) {
 
         const document = await documentManager.createDocument(DocumentType.Technical, title);
         vscode.window.showInformationMessage(`Created technical document: ${title}`);
-        panelManager.showAllPanels(); // Show the document in the UI
+        panelManager.showEditorPanels(); // Show the document in the editor
       } catch (error) {
         vscode.window.showErrorMessage(`Error creating document: ${error}`);
       }
@@ -93,7 +93,7 @@ export function activate(context: vscode.ExtensionContext) {
     'roo-cline-architect.openDocumentExplorer',
     () => {
       try {
-        panelManager.showAllPanels();
+        panelManager.showEditorPanels();
       } catch (error) {
         vscode.window.showErrorMessage(`Error opening document explorer: ${error}`);
       }

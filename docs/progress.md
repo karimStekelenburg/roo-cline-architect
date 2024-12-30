@@ -113,7 +113,10 @@ Current Status: Sprint 1 of Epic 1
   - [x] Document status management
   - [x] Document type handling
   - [x] Integration with extension commands
-- [ ] Basic explorer panel
+- [x] Basic explorer panel
+  - [x] Document explorer provider implementation
+  - [x] Document listing with status indicators
+  - [x] Document creation integration
 - [ ] Initial template system
 
 _Future sprints will be detailed as we progress through the implementation._
